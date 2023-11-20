@@ -1,6 +1,6 @@
 import javax.swing.*;
 import java.awt.*;
-
+import java.io.*;
 import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.List;
@@ -12,6 +12,7 @@ class SimulationWindow extends JFrame {
     private List<Person> people;
     private double simulationTime;
     private final JLabel timerLabel;
+    private final List<Memento> savedStates = new ArrayList<>();
     public SimulationWindow(int height, int width, int variant, int initialPeople) {
         setTitle("Simulation");
         setSize(width , height);
@@ -30,8 +31,48 @@ class SimulationWindow extends JFrame {
         timerLabel.setFont(new Font("Arial", Font.PLAIN, 16));
         timerLabel.setBounds(10, 10, 100, 20);
         add(timerLabel);
+
+        // Dodaj przycisk do zapisywania symulacji
+        JButton saveButton = new JButton("Zapisz Symulację");
+        saveButton.addActionListener(e -> saveSimulationState());
+        add(saveButton);
+
+        // Dodaj przycisk do otwierania symulacji z pliku
+        JButton openButton = new JButton("Otwórz Symulację z Pliku");
+        openButton.addActionListener(e -> openSimulationFromFile());
+        add(openButton);
+        setLayout(new FlowLayout(FlowLayout.CENTER));
+    }
+    private void saveSimulationState() {
+        Memento memento = new Memento(new ArrayList<>(people), simulationTime);
+        savedStates.add(memento);
+        String fileName = "simulation_moment.ser";
+        try (ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream(fileName))) {
+            oos.writeObject(memento);
+            System.out.println("Simulation state saved to file: " + fileName);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
+    private void openSimulationFromFile() {
+        String fileName = "simulation_moment.ser";
+        try (ObjectInputStream ois = new ObjectInputStream(new FileInputStream(fileName))) {
+            Memento memento = (Memento) ois.readObject();
+            restoreSimulationState(memento);
+            System.out.println("Simulation state loaded from file: " + fileName);
+        } catch (IOException | ClassNotFoundException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private void restoreSimulationState(Memento memento) {
+        people.clear();
+        people.addAll(memento.getPeople());
+        simulationTime = memento.getSimulationTime();
+        updateTimerLabel();
+        repaint();
+    }
     private void initializeSimulation(int height, int width, int variant, int initialPeople) {
         people = new ArrayList<>();
         Random random = new Random();

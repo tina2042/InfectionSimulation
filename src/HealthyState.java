@@ -1,6 +1,6 @@
+import java.io.Serializable;
 
-
-public class HealthyState implements HealthState{
+public class HealthyState implements HealthState, Serializable {
     private final boolean isImmune;
 
     public HealthyState(boolean isImmune) {

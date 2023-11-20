@@ -1,4 +1,6 @@
-public class InfectedState implements HealthState{
+import java.io.Serializable;
+
+public class InfectedState implements HealthState, Serializable {
     private final boolean hasSymptoms;
     private double timeSinceInfection;
     private final boolean hasImmunity;

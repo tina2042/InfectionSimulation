@@ -1,7 +1,8 @@
 
+import java.io.Serializable;
 import java.util.Random;
 
-class Person {
+class Person implements Serializable {
     private int x;
     private int y;
     private HealthState healthState;
