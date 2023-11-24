@@ -198,9 +198,9 @@ class SimulationWindow extends JFrame {
         if (person.getHealthState() instanceof InfectedHasSymptomsState ||
                 person.getHealthState() instanceof InfectedNoSymptomsState) {
             int circleRadius = INFECTIONRADIUS * CELL_SIZE;
-            int circleX = x + CELL_SIZE / INFECTIONRADIUS - (int) circleRadius;
-            int circleY = y + CELL_SIZE / INFECTIONRADIUS - (int) circleRadius;
-            int diameter = (int) (circleRadius * 2);
+            int circleX = x + CELL_SIZE / INFECTIONRADIUS -  circleRadius;
+            int circleY = y + CELL_SIZE / INFECTIONRADIUS -  circleRadius;
+            int diameter =  (circleRadius * 2);
             g.drawOval(circleX, circleY, diameter, diameter);
         }
     }
