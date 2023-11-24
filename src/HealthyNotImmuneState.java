@@ -2,7 +2,7 @@ import java.awt.*;
 import java.io.Serializable;
 
 public class HealthyNotImmuneState implements HealthState, Serializable {
-    private Color color;
+    private final Color color;
     public HealthyNotImmuneState(){
         this.color=Color.YELLOW;
     }

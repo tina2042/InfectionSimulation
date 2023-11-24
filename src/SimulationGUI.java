@@ -4,8 +4,7 @@ import java.awt.*;
 
 
 public class SimulationGUI extends JFrame {
-   // private final JTextField heightField;
-   // private final JTextField widthField;
+
     private final JComboBox<String> variantComboBox;
     private final JTextField initialPeopleField;
 
@@ -36,10 +35,17 @@ public class SimulationGUI extends JFrame {
     private void startSimulation() {
 
         int variant = Integer.parseInt((String) variantComboBox.getSelectedItem());
-        int initialPeople = Integer.parseInt(initialPeopleField.getText());
+        int initialPeople;
+        try{
+            initialPeople= Integer.parseInt(initialPeopleField.getText());
+        }
+        catch( Exception e) {
+            initialPeople = 30;
+        }
 
+        int finalInitialPeople = initialPeople;
         SwingUtilities.invokeLater(() -> {
-            SimulationWindow simulationWindow = new SimulationWindow(variant, initialPeople, getGraphics());
+            SimulationWindow simulationWindow = new SimulationWindow(variant, finalInitialPeople);
             simulationWindow.setVisible(true);
         });
     }

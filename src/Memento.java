@@ -1,7 +1,6 @@
 import java.io.Serializable;
 import java.util.List;
 
-// Klasa Memento przeniesiona na zewnątrz
 class Memento implements Serializable {
     private final List<Person> people;
     private final double simulationTime;

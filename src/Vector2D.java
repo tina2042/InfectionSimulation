@@ -14,14 +14,4 @@ public class Vector2D implements IVector, Serializable {
         return new double[]{x, y};
     }
 
-    @Override
-    public double abs() {
-        return Math.sqrt(x * x + y * y);
-    }
-
-    @Override
-    public double cdot(IVector param) {
-        double[] components = param.getComponents();
-        return x * components[0] + y * components[1];
-    }
 }

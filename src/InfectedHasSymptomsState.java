@@ -2,7 +2,7 @@ import java.awt.*;
 import java.io.Serializable;
 
 public class InfectedHasSymptomsState implements HealthState, Serializable {
-    private Color color;
+    private final Color color;
     private double timeSinceInfection;
     public InfectedHasSymptomsState(){
         this.color=Color.RED;

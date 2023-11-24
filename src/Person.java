@@ -1,23 +1,23 @@
-import java.awt.*;
 import java.io.Serializable;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Random;
 
 class Person implements Serializable {
-    private int id;
+    private final int id;
     private Vector2D position;
     private Vector2D velocity;
     private HealthState healthState;
-    private Map<Integer, Double> timeInProximity;
+    private final Map<Integer, Double> timeInProximity;
+    private static final int minTimeToInfect = 3;
+    private static final double ONESECOND = 1000.0;
+    private static final double MAX_SPEED = 2.5/SimulationWindow.CELL_SIZE;
 
-
-    public Person(Vector2D position, int id) {
+    public Person(Vector2D position, int id, int variant) {
         Random random = new Random();
         this.id=id;
         this.position = position;
-        this.velocity = new Vector2D(random.nextDouble(2.5), random.nextDouble(2.5));  // Inicjalizacja losową prędkością
+        this.velocity = new Vector2D(random.nextDouble(MAX_SPEED), random.nextDouble(MAX_SPEED));
         timeInProximity = new HashMap<>();
 
         if (isInfected()) {
@@ -26,10 +26,14 @@ class Person implements Serializable {
             else
                 this.healthState= new InfectedNoSymptomsState();
         } else {
-            if(isImmuneOrHasSymptoms())
-                this.healthState=new HealthyImmuneState();
-            else
-                this.healthState= new HealthyNotImmuneState();
+            if(variant==1) {
+                this.healthState = new HealthyNotImmuneState();
+            }else {
+                if (isImmuneOrHasSymptoms())
+                    this.healthState = new HealthyImmuneState();
+                else
+                    this.healthState = new HealthyNotImmuneState();
+            }
         }
 
     }
@@ -48,18 +52,12 @@ class Person implements Serializable {
         return id;
     }
 
-    public Vector2D generateRandomVelocity() {
+    public Vector2D generateRandomVelocityAndDirection() {
         Random random = new Random();
-        double speed = 2.5;  // Prędkość 2.5 m/s
+        double speed = random.nextDouble() * (MAX_SPEED);  // Losowa prędkość w zakresie od 0 do 2.5 m/s
 
-        // Skalowanie prędkości do rozmiaru CELL_SIZE
-        speed /= SimulationWindow.CELL_SIZE;
-
-        // Losowe ustawienie kierunku
-        double angle = Math.toRadians(random.nextDouble() * 360);
-        double vx = speed * Math.cos(angle);
-        double vy = speed * Math.sin(angle);
-
+        double vx = speed * (random.nextBoolean() ? 1 : -1);
+        double vy = speed * (random.nextBoolean() ? 1 : -1);
         return new Vector2D(vx, vy);
     }
 
@@ -76,8 +74,14 @@ class Person implements Serializable {
     }
 
     public double distanceTo(Person other) {
-        return Math.sqrt(Math.pow(this.position.getComponents()[0] - other.position.getComponents()[0], 2)
-                + Math.pow(this.position.getComponents()[1] - other.position.getComponents()[1], 2));
+        double xDistance = this.position.getComponents()[0] - other.position.getComponents()[0];
+        double yDistance = this.position.getComponents()[1] - other.position.getComponents()[1];
+
+        // Uwzględnij rozmiar komórki (CELL_SIZE)
+        xDistance -= SimulationWindow.CELL_SIZE / 2.0;
+        yDistance -= SimulationWindow.CELL_SIZE / 2.0;
+
+        return Math.sqrt(Math.pow(xDistance, 2) + Math.pow(yDistance, 2));
     }
 
     public void move(Vector2D delta, int maxX, int maxY) {
@@ -96,48 +100,50 @@ class Person implements Serializable {
                 // Sprawdź, czy odległość między osobnikami jest mniejsza lub równa maksymalnej odległości
                 if (this.distanceTo(other) <= maxDistance) {
                     // Jeśli tak, zaktualizuj czas w odpowiedniej odległości
-                    this.updateProximityTime(SimulationWindow.SIMULATION_DELAY / 1000.0, other);
+                    this.updateProximityTime(SimulationWindow.SIMULATION_DELAY / ONESECOND, other);
                     // Sprawdź, czy czas w odpowiedniej odległości jest większy niż 3 sekundy
-                    System.out.println("Person " + this.getId()+ " at (" + this.getPosition().getComponents()[0] + ", " + this.getPosition().getComponents()[1] +
+                    /*System.out.println("Person " + this.getId()+ " at (" + this.getPosition().getComponents()[0] + ", " + this.getPosition().getComponents()[1] +
                             ") is in proximity with person "+ other.getId()+ "at ("+ other.getPosition().getComponents()[0] + ", " + other.getPosition().getComponents()[1] +" for "+
                             this.getTimeInProximity(other) + " seconds");
-
-                    return this.getTimeInProximity(other) >= 3;
+                    */
+                    return this.getTimeInProximity(other) >= minTimeToInfect;
+                } else {
+                    //jeżeli osobnik nie znajduje sie w odpowiednije odleglosci to wyzeruj jego czas w otoczeniu
+                    this.resetProximityTime(other);
                 }
             }
         }
         return false;
     }
 
-    public void infect(Person other, Graphics graphics) {
+    public void infect(Person other) {
         Random random = new Random();
         if (this.healthState instanceof InfectedHasSymptomsState || random.nextDouble() < 0.5) {
             if (!(other.getHealthState() instanceof HealthyImmuneState) ) {
                 if(isImmuneOrHasSymptoms()) {
                     other.healthState = new InfectedHasSymptomsState();
-                    System.out.println("Person at (" + other.getPosition().getComponents()[0] + ", " + other.getPosition().getComponents()[1] +
-                            ") got infected with symptoms");
+                    /*System.out.println("Person at (" + other.getPosition().getComponents()[0] + ", " + other.getPosition().getComponents()[1] +
+                            ") got infected with symptoms");*/
                 } else {
                     other.healthState = new InfectedNoSymptomsState();
-                    System.out.println("Person at (" + other.getPosition().getComponents()[0] + ", " + other.getPosition().getComponents()[1] +
-                            ") got infected with symptoms");
+                    /*System.out.println("Person at (" + other.getPosition().getComponents()[0] + ", " + other.getPosition().getComponents()[1] +
+                            ") got infected with symptoms");*/
                 }
             }
         }
     }
 
 
-    public void updateInfectionTime(Graphics graphics) {
+    public void updateInfectionTime() {
         healthState.updateTimeSinceInfection();
-
-        // Dodano warunek zmiany na HealthyState po losowym czasie między 20 a 30 sekundami
         if (healthState.getTimeSinceInfection() >= 20 && healthState.getTimeSinceInfection() <= 30) {
             Random random = new Random();
             int randomRecoveryTime = 20 + random.nextInt(11);  // Losowy czas w zakresie od 20 do 30 sekund
             if (healthState.getTimeSinceInfection() >= randomRecoveryTime) {
+
+                //System.out.println("Person at (" + this.getPosition().getComponents()[0] + ", " + this.getPosition().getComponents()[1] +
+                //        ") recovered from infection in "+ healthState.getTimeSinceInfection() + " second");
                 healthState = new HealthyImmuneState();
-                System.out.println("Person at (" + this.getPosition().getComponents()[0] + ", " + this.getPosition().getComponents()[1] +
-                        ") recovered from infection");
             }
         }
     }

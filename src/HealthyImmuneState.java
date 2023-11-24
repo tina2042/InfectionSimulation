@@ -3,7 +3,7 @@ import java.io.Serializable;
 
 public class HealthyImmuneState implements HealthState, Serializable {
 
-    private Color color;
+    private final Color color;
 
     public HealthyImmuneState(){
         this.color=Color.GREEN;

@@ -7,15 +7,20 @@ import java.util.List;
 import java.util.Random;
 
 class SimulationWindow extends JFrame {
-    public static final int CELL_SIZE = 10;
+    public static final int CELL_SIZE = 20;
     public static final int SIMULATION_DELAY = 40;
     private static final int WIDTH = 800;
     private static final int HEIGHT = 600;
+    private static final int INFECTIONRADIUS = 2;
+    private static final double ONESECOND = 1000.0;
     private List<Person> people;
     private double simulationTime;
     private final JLabel timerLabel;
+    private final JButton pauseButton;
+    private boolean isPaused;
+    private int populationSize;
 
-    public SimulationWindow(int variant, int initialPeople, Graphics graphics) {
+    public SimulationWindow(int variant, int initialPeople) {
         setTitle("Simulation");
         setSize(WIDTH, HEIGHT + 100);  // Dodatkowa przestrzeń na przyciski
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
@@ -57,19 +62,32 @@ class SimulationWindow extends JFrame {
         openButton.addActionListener(e -> openSimulationFromFile());
         bottomPanel.add(openButton);
 
+        // Dodaj przycisk pauzy
+        pauseButton = new JButton("Pauza");
+        pauseButton.addActionListener(e -> togglePause());
+        bottomPanel.add(pauseButton);
+
         mainPanel.add(bottomPanel, BorderLayout.SOUTH);
 
+        isPaused = false;  // Początkowo symulacja nie jest wstrzymana
         // Inicjalizacja symulacji
         initializeSimulation(variant, initialPeople);
 
         Timer timer = new Timer(SIMULATION_DELAY, e -> {
-            updateSimulation(variant, initialPeople, graphics);
+            updateSimulation(variant);
             simulationPanel.repaint();  // Odświeżanie tylko panelu symulacji
             updateTimerLabel();
         });
         timer.start();
     }
-
+    private void togglePause() {
+        isPaused = !isPaused;
+        if (isPaused) {
+            pauseButton.setText("Wznów");
+        } else {
+            pauseButton.setText("Pauza");
+        }
+    }
     private void saveSimulationState() {
         Memento memento = new Memento(new ArrayList<>(people), simulationTime);
         String fileName = "simulation_moment.ser";
@@ -88,7 +106,7 @@ class SimulationWindow extends JFrame {
             restoreSimulationState(memento);
             System.out.println("Simulation state loaded from file: " + fileName);
         } catch (IOException | ClassNotFoundException e) {
-            e.printStackTrace();
+            System.out.println("First save simulation to restore it.");
         }
     }
 
@@ -101,65 +119,68 @@ class SimulationWindow extends JFrame {
     }
 
     private void initializeSimulation(int variant, int initialPeople) {
+        this.populationSize=initialPeople;
         people = new ArrayList<>();
         Random random = new Random();
         for (int i = 0; i < initialPeople; i++) {
-            double x = random.nextDouble(WIDTH / CELL_SIZE);
-            double y = random.nextDouble(HEIGHT / CELL_SIZE);
-            people.add(new Person(new Vector2D(x * CELL_SIZE, y * CELL_SIZE), i));
+            double x = random.nextDouble(WIDTH*1.0 / CELL_SIZE);
+            double y = random.nextDouble(HEIGHT*1.0 / CELL_SIZE);
+            people.add(new Person(new Vector2D(x * CELL_SIZE, y * CELL_SIZE), i, variant));
         }
     }
 
-    private void updateSimulation(int variant, int populationSize, Graphics graphics) {
-        Random random = new Random();
-        List<Person> peopleToRemove = new ArrayList<>();
+    private void updateSimulation(int variant) {
+        if (!isPaused) {
+            Random random = new Random();
+            List<Person> peopleToRemove = new ArrayList<>();
 
-        if (random.nextDouble() < 0.05) {
-            int x = random.nextInt(WIDTH / CELL_SIZE);
-            int y = random.nextInt(HEIGHT / CELL_SIZE);
-            people.add(new Person(new Vector2D(x * CELL_SIZE, y * CELL_SIZE), populationSize));
-            populationSize++;
-        }
-
-        for (Person person : people) {
-            // Losowa zmiana prędkości i kierunku z 10% szansą
-            if (random.nextDouble() < 0.1) {
-                Vector2D newVelocity = person.generateRandomVelocity();
-                person.setVelocity(newVelocity);
+            if (random.nextDouble() < 0.05) {
+                int x = random.nextInt(WIDTH / CELL_SIZE);
+                int y = random.nextInt(HEIGHT / CELL_SIZE);
+                people.add(new Person(new Vector2D(x * CELL_SIZE, y * CELL_SIZE), this.populationSize, variant));
+                this.populationSize++;
             }
 
-            double dx = person.getVelocity().getComponents()[0];
-            double dy = person.getVelocity().getComponents()[1];
-
-            if (isAtEdge(person, WIDTH, HEIGHT)) {
-                if (random.nextDouble() < 0.5) {
-                    person.setVelocity(new Vector2D(-dx, -dy));
-                } else {
-                    peopleToRemove.add(person);
-                    continue;
+            for (Person person : people) {
+                // Losowa zmiana prędkości i kierunku z 10% szansą
+                if (random.nextDouble() < 0.1) {
+                    Vector2D newVelocity = person.generateRandomVelocityAndDirection();
+                    person.setVelocity(newVelocity);
                 }
-            }
 
-            person.move(new Vector2D(dx * CELL_SIZE, dy * CELL_SIZE), getWidth(), getHeight());
+                double dx = person.getVelocity().getComponents()[0];
+                double dy = person.getVelocity().getComponents()[1];
 
-            for (Person other : people) {
-                if (person.canInfect(other, 2 * CELL_SIZE)) {
-                    person.infect(other, graphics);
-                    person.resetProximityTime(other);
+                if (isAtEdge(person)) {
+                    if (random.nextDouble() < 0.5) {
+                        person.setVelocity(new Vector2D(-dx, -dy));
+                    } else {
+                        peopleToRemove.add(person);
+                        continue;
+                    }
                 }
-            }
 
-            person.updateInfectionTime(graphics);
+                person.move(new Vector2D(dx * CELL_SIZE, dy * CELL_SIZE), getWidth(), getHeight());
+
+                for (Person other : people) {
+                    if (person.canInfect(other, INFECTIONRADIUS * CELL_SIZE)) {
+                        person.infect(other);
+                        person.resetProximityTime(other);
+                    }
+                }
+
+                person.updateInfectionTime();
+            }
+            people.removeAll(peopleToRemove);
+            simulationTime += SIMULATION_DELAY / ONESECOND;
+            updateTimerLabel();
         }
-        people.removeAll(peopleToRemove);
-        simulationTime += SIMULATION_DELAY / 1000.0;
-        updateTimerLabel();
     }
 
-    private boolean isAtEdge(Person person, int maxWidth, int maxHeight) {
+    private boolean isAtEdge(Person person) {
         double x = person.getPosition().getComponents()[0];
         double y = person.getPosition().getComponents()[1];
-        return x <= 0 || x >= maxWidth - CELL_SIZE || y <= 0 || y >= maxHeight - CELL_SIZE;
+        return x <= 0 || x >= WIDTH - CELL_SIZE || y <= 0 || y >= HEIGHT - CELL_SIZE;
     }
 
     private void updateTimerLabel() {
@@ -176,9 +197,9 @@ class SimulationWindow extends JFrame {
 
         if (person.getHealthState() instanceof InfectedHasSymptomsState ||
                 person.getHealthState() instanceof InfectedNoSymptomsState) {
-            double circleRadius = 2.0 * CELL_SIZE;
-            int circleX = x + CELL_SIZE / 2 - (int) circleRadius;
-            int circleY = y + CELL_SIZE / 2 - (int) circleRadius;
+            int circleRadius = INFECTIONRADIUS * CELL_SIZE;
+            int circleX = x + CELL_SIZE / INFECTIONRADIUS - (int) circleRadius;
+            int circleY = y + CELL_SIZE / INFECTIONRADIUS - (int) circleRadius;
             int diameter = (int) (circleRadius * 2);
             g.drawOval(circleX, circleY, diameter, diameter);
         }
