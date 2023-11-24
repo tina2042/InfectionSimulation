@@ -98,6 +98,10 @@ class Person implements Serializable {
                     // Jeśli tak, zaktualizuj czas w odpowiedniej odległości
                     this.updateProximityTime(SimulationWindow.SIMULATION_DELAY / 1000.0, other);
                     // Sprawdź, czy czas w odpowiedniej odległości jest większy niż 3 sekundy
+                    System.out.println("Person " + this.getId()+ " at (" + this.getPosition().getComponents()[0] + ", " + this.getPosition().getComponents()[1] +
+                            ") is in proximity with person "+ other.getId()+ "at ("+ other.getPosition().getComponents()[0] + ", " + other.getPosition().getComponents()[1] +" for "+
+                            this.getTimeInProximity(other) + " seconds");
+
                     return this.getTimeInProximity(other) >= 3;
                 }
             }
@@ -111,12 +115,12 @@ class Person implements Serializable {
             if (!(other.getHealthState() instanceof HealthyImmuneState) ) {
                 if(isImmuneOrHasSymptoms()) {
                     other.healthState = new InfectedHasSymptomsState();
-                    //System.out.println("Person at (" + other.getX() + ", " + other.getY() +
-                    //        ") got infected with symptoms"
+                    System.out.println("Person at (" + other.getPosition().getComponents()[0] + ", " + other.getPosition().getComponents()[1] +
+                            ") got infected with symptoms");
                 } else {
                     other.healthState = new InfectedNoSymptomsState();
-                    //System.out.println("Person at (" + other.getX() + ", " + other.getY() +
-                    //        ") got infected with no symptoms"
+                    System.out.println("Person at (" + other.getPosition().getComponents()[0] + ", " + other.getPosition().getComponents()[1] +
+                            ") got infected with symptoms");
                 }
             }
         }
@@ -124,17 +128,28 @@ class Person implements Serializable {
 
 
     public void updateInfectionTime(Graphics graphics) {
-
         healthState.updateTimeSinceInfection();
-        // Dodano warunek zmiany na HealthyState po 20-30 sekundach
+
+        // Dodano warunek zmiany na HealthyState po losowym czasie między 20 a 30 sekundami
         if (healthState.getTimeSinceInfection() >= 20 && healthState.getTimeSinceInfection() <= 30) {
-            healthState = new HealthyImmuneState();
-            //System.out.println("Person at (" + getX() + ", " + getY() +
-            //        ") recovered from infection and is now healthy");
+            Random random = new Random();
+            int randomRecoveryTime = 20 + random.nextInt(11);  // Losowy czas w zakresie od 20 do 30 sekund
+            if (healthState.getTimeSinceInfection() >= randomRecoveryTime) {
+                healthState = new HealthyImmuneState();
+                System.out.println("Person at (" + this.getPosition().getComponents()[0] + ", " + this.getPosition().getComponents()[1] +
+                        ") recovered from infection");
+            }
         }
     }
+
     public void updateProximityTime(double deltaTimeInSeconds, Person other) {
-        timeInProximity.put(other.getId(), deltaTimeInSeconds);
+        double newTime;
+        if (timeInProximity.containsKey(other.getId())) {
+            newTime = timeInProximity.get(other.getId()) + deltaTimeInSeconds;
+        } else {
+            newTime=deltaTimeInSeconds;
+        }
+        timeInProximity.put(other.getId(), newTime);
     }
 
     public void resetProximityTime(Person other) {

@@ -12,7 +12,7 @@ public class InfectedHasSymptomsState implements HealthState, Serializable {
 
     @Override
     public void updateTimeSinceInfection(){
-        this.timeSinceInfection+=SimulationWindow.SIMULATION_DELAY / 1000.0;
+        this.timeSinceInfection += SimulationWindow.SIMULATION_DELAY / 1000.0;
     }
     @Override
     public double getTimeSinceInfection(){

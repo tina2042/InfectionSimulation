@@ -9,16 +9,15 @@ import java.util.Random;
 class SimulationWindow extends JFrame {
     public static final int CELL_SIZE = 10;
     public static final int SIMULATION_DELAY = 40;
-    private static final int WIDTH=800;
-    private static final int HEIGHT=800;
+    private static final int WIDTH = 800;
+    private static final int HEIGHT = 600;
     private List<Person> people;
     private double simulationTime;
     private final JLabel timerLabel;
 
-    public SimulationWindow( int variant, int initialPeople, Graphics graphics) {
+    public SimulationWindow(int variant, int initialPeople, Graphics graphics) {
         setTitle("Simulation");
-        setSize(WIDTH, HEIGHT);
-        setLocationRelativeTo(null);
+        setSize(WIDTH, HEIGHT + 100);  // Dodatkowa przestrzeń na przyciski
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setResizable(false);
 
@@ -27,7 +26,17 @@ class SimulationWindow extends JFrame {
         setContentPane(mainPanel);
 
         // Panel dla symulacji
-        JPanel simulationPanel = new JPanel();
+        JPanel simulationPanel = new JPanel() {
+            @Override
+            protected void paintComponent(Graphics g) {
+                super.paintComponent(g);
+                g.setColor(Color.DARK_GRAY);  // Ustawienie ciemnego tła
+                g.fillRect(0, 0, getWidth(), getHeight());
+                for (Person person : people) {
+                    drawPerson(g, person);
+                }
+            }
+        };
         simulationPanel.setPreferredSize(new Dimension(WIDTH, HEIGHT));
         mainPanel.add(simulationPanel, BorderLayout.CENTER);
 
@@ -42,22 +51,23 @@ class SimulationWindow extends JFrame {
         JPanel bottomPanel = new JPanel(new FlowLayout(FlowLayout.CENTER));
         JButton saveButton = new JButton("Zapisz Symulację");
         saveButton.addActionListener(e -> saveSimulationState());
-        //add(saveButton);
+        bottomPanel.add(saveButton);
+
         JButton openButton = new JButton("Otwórz Symulację z Pliku");
         openButton.addActionListener(e -> openSimulationFromFile());
-        //add(openButton);
-        bottomPanel.add(saveButton);
         bottomPanel.add(openButton);
+
         mainPanel.add(bottomPanel, BorderLayout.SOUTH);
-        initializeSimulation(variant, initialPeople, graphics);
+
+        // Inicjalizacja symulacji
+        initializeSimulation(variant, initialPeople);
 
         Timer timer = new Timer(SIMULATION_DELAY, e -> {
             updateSimulation(variant, initialPeople, graphics);
-            repaint();
+            simulationPanel.repaint();  // Odświeżanie tylko panelu symulacji
+            updateTimerLabel();
         });
         timer.start();
-
-        setLayout(new FlowLayout(FlowLayout.CENTER));
     }
 
     private void saveSimulationState() {
@@ -90,13 +100,13 @@ class SimulationWindow extends JFrame {
         repaint();
     }
 
-    private void initializeSimulation( int variant, int initialPeople, Graphics graphics) {
+    private void initializeSimulation(int variant, int initialPeople) {
         people = new ArrayList<>();
         Random random = new Random();
         for (int i = 0; i < initialPeople; i++) {
-            double x = random.nextDouble(WIDTH/CELL_SIZE);
-            double y = random.nextDouble(HEIGHT/CELL_SIZE);
-            people.add(new Person(new Vector2D(x * CELL_SIZE , y * CELL_SIZE), i));
+            double x = random.nextDouble(WIDTH / CELL_SIZE);
+            double y = random.nextDouble(HEIGHT / CELL_SIZE);
+            people.add(new Person(new Vector2D(x * CELL_SIZE, y * CELL_SIZE), i));
         }
     }
 
@@ -105,8 +115,8 @@ class SimulationWindow extends JFrame {
         List<Person> peopleToRemove = new ArrayList<>();
 
         if (random.nextDouble() < 0.05) {
-            double x = random.nextDouble(WIDTH/ CELL_SIZE);
-            double y = random.nextDouble(HEIGHT / CELL_SIZE);
+            int x = random.nextInt(WIDTH / CELL_SIZE);
+            int y = random.nextInt(HEIGHT / CELL_SIZE);
             people.add(new Person(new Vector2D(x * CELL_SIZE, y * CELL_SIZE), populationSize));
             populationSize++;
         }
@@ -123,17 +133,13 @@ class SimulationWindow extends JFrame {
 
             if (isAtEdge(person, WIDTH, HEIGHT)) {
                 if (random.nextDouble() < 0.5) {
-                    // 50% przypadków - zmiana kierunku do środka
-                    Vector2D centerVector = new Vector2D(WIDTH / 2 - person.getPosition().getComponents()[0],
-                            HEIGHT / 2 - person.getPosition().getComponents()[1]);
-                    //centerVector.normalize();
-                    person.setVelocity(centerVector);
+                    person.setVelocity(new Vector2D(-dx, -dy));
                 } else {
-                    // 50% przypadków - usunięcie osobnika
                     peopleToRemove.add(person);
                     continue;
                 }
             }
+
             person.move(new Vector2D(dx * CELL_SIZE, dy * CELL_SIZE), getWidth(), getHeight());
 
             for (Person other : people) {
@@ -149,6 +155,7 @@ class SimulationWindow extends JFrame {
         simulationTime += SIMULATION_DELAY / 1000.0;
         updateTimerLabel();
     }
+
     private boolean isAtEdge(Person person, int maxWidth, int maxHeight) {
         double x = person.getPosition().getComponents()[0];
         double y = person.getPosition().getComponents()[1];
@@ -158,14 +165,6 @@ class SimulationWindow extends JFrame {
     private void updateTimerLabel() {
         DecimalFormat df = new DecimalFormat("#.##");
         timerLabel.setText("Time: " + df.format(simulationTime) + "s");
-    }
-
-    @Override
-    public void paint(Graphics g) {
-        super.paint(g);
-        for (Person person : people) {
-            drawPerson(g, person);
-        }
     }
 
     private void drawPerson(Graphics g, Person person) {
