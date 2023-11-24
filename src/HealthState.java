@@ -1,5 +1,9 @@
-public interface HealthState {
-    boolean handleHealthState(Person context);
+import java.awt.*;
 
-    boolean hasImmunity();
+public interface HealthState {
+
+    void updateTimeSinceInfection();
+    double getTimeSinceInfection();
+    Color getFillColor();
+
 }

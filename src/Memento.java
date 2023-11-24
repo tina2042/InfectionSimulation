@@ -1,5 +1,4 @@
 import java.io.Serializable;
-import java.util.ArrayList;
 import java.util.List;
 
 // Klasa Memento przeniesiona na zewnątrz

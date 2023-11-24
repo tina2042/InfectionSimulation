@@ -4,26 +4,19 @@ import java.awt.*;
 
 
 public class SimulationGUI extends JFrame {
-    private final JTextField heightField;
-    private final JTextField widthField;
+   // private final JTextField heightField;
+   // private final JTextField widthField;
     private final JComboBox<String> variantComboBox;
     private final JTextField initialPeopleField;
 
     public SimulationGUI() {
         setTitle("Simulation Configuration");
-        setSize(400, 300);
+        setSize(300, 300);
+        setLocationRelativeTo(null);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setResizable(false);
         setLayout(new FlowLayout());
 
-        // Dodaj pola tekstowe i etykiety dla wysokości, szerokości, wariantu i liczby początkowych osobników
-        add(new JLabel("Height: "));
-        heightField = new JTextField(5);
-        add(heightField);
-
-        add(new JLabel("Width: "));
-        widthField = new JTextField(5);
-        add(widthField);
 
         add(new JLabel("Variant (1 or 2): "));
         String[] variants = {"1", "2"};
@@ -42,13 +35,11 @@ public class SimulationGUI extends JFrame {
 
     private void startSimulation() {
 
-        int height = Integer.parseInt(heightField.getText());
-        int width = Integer.parseInt(widthField.getText());
         int variant = Integer.parseInt((String) variantComboBox.getSelectedItem());
         int initialPeople = Integer.parseInt(initialPeopleField.getText());
 
         SwingUtilities.invokeLater(() -> {
-            SimulationWindow simulationWindow = new SimulationWindow(height, width, variant, initialPeople);
+            SimulationWindow simulationWindow = new SimulationWindow(variant, initialPeople, getGraphics());
             simulationWindow.setVisible(true);
         });
     }
