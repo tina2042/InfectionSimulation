@@ -4,7 +4,7 @@ import java.awt.*;
 
 
 public class SimulationGUI extends JFrame {
-
+    private static final int DEFAULTINITIALPEOPLE = 30;
     private final JComboBox<String> variantComboBox;
     private final JTextField initialPeopleField;
 
@@ -16,7 +16,8 @@ public class SimulationGUI extends JFrame {
         setResizable(false);
         setLayout(new FlowLayout());
 
-
+        add( new JLabel("Variant 1: Initial population don't have immunity. \n"));
+        add( new JLabel("Variant 2: Initial people might have immunity. \n"));
         add(new JLabel("Variant (1 or 2): "));
         String[] variants = {"1", "2"};
         variantComboBox = new JComboBox<>(variants);
@@ -40,7 +41,7 @@ public class SimulationGUI extends JFrame {
             initialPeople= Integer.parseInt(initialPeopleField.getText());
         }
         catch( Exception e) {
-            initialPeople = 30;
+            initialPeople = DEFAULTINITIALPEOPLE;
         }
 
         int finalInitialPeople = initialPeople;

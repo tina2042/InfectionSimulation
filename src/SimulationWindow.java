@@ -35,7 +35,7 @@ class SimulationWindow extends JFrame {
             @Override
             protected void paintComponent(Graphics g) {
                 super.paintComponent(g);
-                g.setColor(Color.DARK_GRAY);  // Ustawienie ciemnego tła
+                g.setColor(Color.DARK_GRAY);
                 g.fillRect(0, 0, getWidth(), getHeight());
                 for (Person person : people) {
                     drawPerson(g, person);
@@ -69,13 +69,13 @@ class SimulationWindow extends JFrame {
 
         mainPanel.add(bottomPanel, BorderLayout.SOUTH);
 
-        isPaused = false;  // Początkowo symulacja nie jest wstrzymana
+        isPaused = false;
         // Inicjalizacja symulacji
         initializeSimulation(variant, initialPeople);
 
         Timer timer = new Timer(SIMULATION_DELAY, e -> {
             updateSimulation(variant);
-            simulationPanel.repaint();  // Odświeżanie tylko panelu symulacji
+            simulationPanel.repaint();
             updateTimerLabel();
         });
         timer.start();
@@ -83,7 +83,7 @@ class SimulationWindow extends JFrame {
     private void togglePause() {
         isPaused = !isPaused;
         if (isPaused) {
-            pauseButton.setText("Wznów");
+            pauseButton.setText("Resume");
         } else {
             pauseButton.setText("Pauza");
         }
