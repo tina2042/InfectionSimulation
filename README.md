@@ -23,9 +23,9 @@ The Memento pattern is used to capture and restore the state of the simulation. 
 
 ### Input Parameters
 The simulation requires the following input parameters:
-- ** Variant 1 **: Initial population don't have immunity.
-- ** Variant 2 **: Initial people might have immunity.
-- ** Initial People **: Numer of initial people.
+- **Variant 1**: Initial population don't have immunity.
+- **Variant 2**: Initial people might have immunity.
+- **Initial People**: Numer of initial people.
 
 ### Running the Simulation
 1. The program will prompt for the input parameters.
